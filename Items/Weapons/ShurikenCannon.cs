@@ -8,7 +8,7 @@ namespace Desolation.Items.Weapons
     {
         public override void SetStaticDefaults()
         {
-            Tooltip.SetDefault("Shoots Shurikens at a rapid rate");
+            Tooltip.SetDefault("Shoots Shurikens at a rapid rate\n 50% not to consume ammo while wearing the full ninja outfit");
         }
 
         public override void SetDefaults()
@@ -40,7 +40,8 @@ namespace Desolation.Items.Weapons
 
         public override bool ConsumeAmmo(Player player)
         {
-            return !(player.head == ItemID.NinjaHood && player.body == ItemID.NinjaShirt && player.legs == ItemID.NinjaPants) && base.ConsumeAmmo(player);
+            bool ninja = player.head == ArmorIDs.Head.NinjaHood && player.body == ArmorIDs.Body.NinjaShirt && player.legs == ArmorIDs.Legs.NinjaPants;
+            return !(ninja && Main.rand.NextBool()) && base.ConsumeAmmo(player);
         }
 
         public override void AddRecipes()
