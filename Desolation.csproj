@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Items\Ammo\" />
+    <Folder Include="Items\Placeable\" />
   </ItemGroup>
 </Project>
