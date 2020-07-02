@@ -10,7 +10,7 @@ namespace Desolation.Items.Armor.Necromancer
     {
         public override void SetStaticDefaults()
         {
-            Tooltip.SetDefault("The hood of a mighty necromancer");
+            Tooltip.SetDefault("A necromancer's hood");
         }
 
         public override void SetDefaults()

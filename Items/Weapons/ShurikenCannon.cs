@@ -1,7 +1,5 @@
-using Desolation.Items.Ammo;
 using Terraria.ID;
 using Terraria.ModLoader;
-using static Terraria.ModLoader.ModContent;
 
 namespace Desolation.Items.Weapons
 {
@@ -31,7 +29,7 @@ namespace Desolation.Items.Weapons
             item.height = 33;
 
             // Ammo
-            item.useAmmo = ItemType<Shuriken>();
+            item.useAmmo = ItemID.Shuriken;
             item.shoot = 10;
 
             // Misc
