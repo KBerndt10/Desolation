@@ -259,3 +259,6 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/NPCs/hover_biker.piskel
+/NPCs/HoverBiker.png
+/NPCs/HoverBiker.cs

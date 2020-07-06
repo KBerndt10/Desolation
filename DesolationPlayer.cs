@@ -1,4 +1,7 @@
+using Desolation.Items.Fish;
+using Terraria;
 using Terraria.ModLoader;
+using static Terraria.ModLoader.ModContent;
 
 namespace Desolation
 {
@@ -11,6 +14,18 @@ namespace Desolation
         public override void ResetEffects()
         {
             necroPact = false;
+        }
+
+        public override void CatchFish(Item fishingRod, Item bait, int power, int liquidType, int poolSize, int worldLayer, int questFish, ref int caughtType, ref bool junk)
+        {
+            if (junk)
+            {
+                return;
+            }
+            if (liquidType == 0 && player.ZoneBeach && Main.rand.Next(0, 3) == 1)
+            {
+                caughtType = ItemType<BlueTang>();
+            }
         }
     }
 }
