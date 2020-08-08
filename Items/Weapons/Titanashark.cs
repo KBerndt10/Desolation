@@ -46,13 +46,16 @@ namespace Desolation.Items.Weapons
 
         public override void AddRecipes()
         {
-            ModRecipe recipe = new ModRecipe(mod);
-            recipe.AddTile(240);
-            recipe.AddIngredient(ItemID.Megashark);
-            recipe.AddIngredient(ItemID.IllegalGunParts, 20);
-            recipe.AddIngredient(ItemID.LunarBar, 13);
-            recipe.SetResult(this);
-            recipe.AddRecipe();
+            if (Desolation.DEBUG)
+            {
+                ModRecipe recipe = new ModRecipe(mod);
+                recipe.AddTile(240);
+                recipe.AddIngredient(ItemID.Megashark);
+                recipe.AddIngredient(ItemID.IllegalGunParts, 20);
+                recipe.AddIngredient(ItemID.LunarBar, 13);
+                recipe.SetResult(this);
+                recipe.AddRecipe();
+            }
         }
     }
 }

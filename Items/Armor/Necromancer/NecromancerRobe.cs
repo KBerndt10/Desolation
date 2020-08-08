@@ -17,6 +17,7 @@ namespace Desolation.Items.Armor.Necromancer
             item.height = 14;
             item.rare = ItemRarityID.Blue;
             item.defense = 1;
+            item.value = 1000;
         }
 
         public override void SetMatch(bool male, ref int equipSlot, ref bool robes)

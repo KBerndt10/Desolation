@@ -34,7 +34,7 @@ namespace Desolation.Items.Weapons
             item.shoot = 10;
 
             // Misc
-            item.value = 10000;
+            item.value = 25000;
             item.rare = ItemRarityID.Green;
         }
 

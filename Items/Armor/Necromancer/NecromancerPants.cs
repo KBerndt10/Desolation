@@ -16,7 +16,7 @@ namespace Desolation.Items.Armor.Necromancer
         {
             item.width = 18;
             item.height = 18;
-            item.value = 10000;
+            item.value = 1000;
             item.rare = ItemRarityID.Blue;
             item.defense = 1;
         }

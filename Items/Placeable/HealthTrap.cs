@@ -24,11 +24,14 @@ namespace Desolation.Items.Placeable
 
         public override void AddRecipes()
         {
-            ModRecipe recipe = new ModRecipe(mod);
-            recipe.AddIngredient(ItemID.DartTrap);
-            recipe.AddIngredient(ItemID.GreaterHealingPotion, 10);
-            recipe.SetResult(this);
-            recipe.AddRecipe();
+            if (Desolation.DEBUG)
+            {
+                ModRecipe recipe = new ModRecipe(mod);
+                recipe.AddIngredient(ItemID.DartTrap);
+                recipe.AddIngredient(ItemID.GreaterHealingPotion, 10);
+                recipe.SetResult(this);
+                recipe.AddRecipe();
+            }
         }
     }
 }

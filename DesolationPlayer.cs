@@ -22,7 +22,7 @@ namespace Desolation
             {
                 return;
             }
-            if (liquidType == 0 && player.ZoneBeach && Main.rand.Next(0, 3) == 1)
+            if (Desolation.DEBUG && liquidType == 0 && player.ZoneBeach && Main.rand.Next(0, 3) == 1)
             {
                 caughtType = ItemType<BlueTang>();
             }

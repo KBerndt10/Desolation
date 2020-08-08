@@ -2,7 +2,7 @@
 using Terraria;
 using Terraria.ModLoader;
 
-namespace Desolation.NPCs
+namespace Desolation.Projectiles
 {
     public class DesolationGlobalProjectile : GlobalProjectile
     {
