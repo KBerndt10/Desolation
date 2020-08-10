@@ -92,7 +92,7 @@ namespace Desolation.Items.Weapons
             recipe.SetResult(this);
             recipe.AddTile(TileID.MythrilAnvil);
             recipe.AddIngredient(ItemID.HallowedBar, 12);
-            recipe.AddIngredient(ItemID.SoulofFright, 16z);
+            recipe.AddIngredient(ItemID.SoulofFright, 16);
             recipe.AddIngredient(ItemID.IllegalGunParts, 2);
             recipe.AddRecipe();
         }
