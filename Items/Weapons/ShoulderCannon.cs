@@ -18,17 +18,17 @@ namespace Desolation.Items.Weapons
         public override void SetDefaults()
         {
             // Combat
-            item.damage = 30;
+            item.damage = 36;
             item.ranged = true;
             item.noMelee = true;
-            item.knockBack = 1;
-            item.shootSpeed = 7.2f;
+            item.knockBack = 2;
+            item.shootSpeed = 14f;
             item.useAmmo = AmmoID.Bullet;
             item.shoot = 10;
 
             // Use time
-            item.useTime = 28;
-            item.useAnimation = 28;
+            item.useTime = 20;
+            item.useAnimation = 20;
             item.useStyle = ItemUseStyleID.HoldingOut;
             item.autoReuse = true;
 
@@ -39,8 +39,8 @@ namespace Desolation.Items.Weapons
             item.height = 18;
 
             // Rarity
-            item.value = 5400;
-            item.rare = ItemRarityID.Orange;
+            item.value = 40000;
+            item.rare = ItemRarityID.LightRed;
         }
 
         private void SpawnTurrets(Player player)
@@ -80,20 +80,21 @@ namespace Desolation.Items.Weapons
                 left *= power;
                 right *= power;
 
-                Projectile.NewProjectile(Main.projectile[LeftTurret].position, left, type, damage, knockBack, player.whoAmI);
-                Projectile.NewProjectile(Main.projectile[RightTurret].position, right, type, damage, knockBack, player.whoAmI);
+                Projectile.NewProjectile(Main.projectile[LeftTurret].Center, left, type, damage, knockBack, player.whoAmI);
+                Projectile.NewProjectile(Main.projectile[RightTurret].Center, right, type, damage, knockBack, player.whoAmI);
             }
             return false;
         }
 
         public override void AddRecipes()
         {
-            if (Desolation.DEBUG)
-            {
-                ModRecipe recipe = new ModRecipe(mod);
-                recipe.SetResult(this);
-                recipe.AddRecipe();
-            }
+            ModRecipe recipe = new ModRecipe(mod);
+            recipe.SetResult(this);
+            recipe.AddTile(TileID.MythrilAnvil);
+            recipe.AddIngredient(ItemID.HallowedBar, 12);
+            recipe.AddIngredient(ItemID.SoulofFright, 16z);
+            recipe.AddIngredient(ItemID.IllegalGunParts, 2);
+            recipe.AddRecipe();
         }
     }
 }
