@@ -47,12 +47,12 @@ namespace Desolation.Items.Weapons
         {
             if (RightTurret == -1 || Main.projectile[RightTurret].type != mod.ProjectileType("ShoulderTurret"))
             {
-                RightTurret = Projectile.NewProjectile(player.position, new Vector2(0, 0), mod.ProjectileType("ShoulderTurret"), 0, 0, player.whoAmI, 6, -4);
+                RightTurret = Projectile.NewProjectile(player.position, new Vector2(0, 0), mod.ProjectileType("ShoulderTurret"), 0, 0, player.whoAmI, 24, -16);
             }
 
             if (LeftTurret == -1 || Main.projectile[LeftTurret].type != mod.ProjectileType("ShoulderTurret"))
             {
-                LeftTurret = Projectile.NewProjectile(player.position, new Vector2(0, 0), mod.ProjectileType("ShoulderTurret"), 0, 0, player.whoAmI, -6, -4);
+                LeftTurret = Projectile.NewProjectile(player.position, new Vector2(0, 0), mod.ProjectileType("ShoulderTurret"), 0, 0, player.whoAmI, -42, -16);
             }
         }
 
@@ -79,6 +79,8 @@ namespace Desolation.Items.Weapons
                 right.Normalize();
                 left *= power;
                 right *= power;
+                //left = left.RotatedBy(Main.projectile[LeftTurret].rotation);
+                // right = right.RotatedBy(Main.projectile[RightTurret].rotation);
 
                 Projectile.NewProjectile(Main.projectile[LeftTurret].Center, left, type, damage, knockBack, player.whoAmI);
                 Projectile.NewProjectile(Main.projectile[RightTurret].Center, right, type, damage, knockBack, player.whoAmI);
