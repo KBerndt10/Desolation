@@ -1,4 +1,5 @@
-﻿using Terraria;
+﻿using Microsoft.Xna.Framework;
+using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using static Terraria.ModLoader.ModContent;
@@ -7,6 +8,9 @@ namespace Desolation.NPCs.Oculus
 {
     internal class OculusPrimaryEye : ModNPC
     {
+        private bool LookAtPlayer = true;
+        private int frame;
+
         public override void SetStaticDefaults()
         {
             Main.npcFrameCount[npc.type] = 14;
@@ -27,7 +31,6 @@ namespace Desolation.NPCs.Oculus
             // AI
             npc.aiStyle = -1;
             aiType = -1;
-            npc.boss = true;
 
             // Combat
             npc.damage = 30;
@@ -38,7 +41,7 @@ namespace Desolation.NPCs.Oculus
             npc.noGravity = true;
         }
 
-        // Which state in the npc.ai[] is which
+        // Which slot in the npc.ai[] is which
 
         private const int AI_Master_Slot = 0;
         private const int AI_State_Slot = 1;
@@ -85,21 +88,58 @@ namespace Desolation.NPCs.Oculus
             set { npc.velocity.Normalize(); npc.velocity *= value; }
         }
 
-        private NPC master => Main.npc[AI_Master];
+        private NPC Master => Main.npc[AI_Master];
+        private Oculus.State MasterState => (Oculus.State)Master.ai[0];
+        private int MasterTimer => (int)Master.ai[1];
+
+        public override void FindFrame(int frameHeight)
+        {
+            npc.frameCounter++;
+            if (npc.frameCounter > 13)
+            {
+                npc.frameCounter = 0;
+                if (++frame > 6)
+                {
+                    frame = 0;
+                }
+            }
+            npc.frame.Y = frame * frameHeight;
+            if (LookAtPlayer)
+            {
+                npc.rotation = npc.AngleTo(Target.Center) + MathHelper.PiOver4;
+            }
+            base.FindFrame(frameHeight);
+        }
 
         public override void AI()
         {
             // Get rid of this is the master is gone
-            if (!master.active || master.type != NPCType<Oculus>())
+            if (!Master.active || Master.type != NPCType<Oculus>())
             {
                 npc.active = false;
+            }
+            else
+            {
+                npc.timeLeft = 10;
             }
 
             // If over half life, stick to master
             if (npc.life > npc.lifeMax / 2)
             {
-                npc.position = master.Center;
+                npc.position = Master.Center;
                 npc.TargetClosest();
+                if (Main.netMode != NetmodeID.MultiplayerClient)
+                {
+                    switch (MasterState)
+                    {
+                        case Oculus.State.Crying:
+                            if (MasterTimer % 5 == 0)
+                            {
+                                Projectile.NewProjectile(npc.Center.X + Main.rand.NextFloat(npc.width / 2, npc.width / -2), npc.position.Y + npc.height, 0, 4, ProjectileID.RainNimbus, 30, 2);
+                            }
+                            break;
+                    }
+                }
             }
         }
     }

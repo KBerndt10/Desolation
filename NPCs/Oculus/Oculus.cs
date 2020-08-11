@@ -5,6 +5,7 @@ using static Terraria.ModLoader.ModContent;
 
 namespace Desolation.NPCs.Oculus
 {
+    [AutoloadBossHead]
     internal class Oculus : ModNPC
     {
         private int myFrame = 0;
@@ -32,7 +33,7 @@ namespace Desolation.NPCs.Oculus
             npc.boss = true;
 
             // Combat
-            npc.damage = 42;
+            npc.damage = 0;
             npc.defense = 25;
             npc.lifeMax = 35000;
             npc.knockBackResist = 0f;
@@ -51,9 +52,9 @@ namespace Desolation.NPCs.Oculus
         private const int AI_Slot_3 = 3;
 
         // State values
-        private enum State
+        public enum State
         {
-            Initial = 0, Waiting
+            Initial = 0, Waiting, Crying
         }
 
         private const float speed = 8f;
@@ -84,11 +85,22 @@ namespace Desolation.NPCs.Oculus
             set { npc.velocity.Normalize(); npc.velocity *= value; }
         }
 
-        private int PrimaryEyeID = -2;
+        private int PrimaryEyeID = -1;
 
         private void SpawnEyes()
         {
             PrimaryEyeID = NPC.NewNPC((int)npc.position.X, (int)npc.position.Y, NPCType<OculusPrimaryEye>(), 0, npc.whoAmI);
+            if (PrimaryEyeID > npc.whoAmI) // Ensure the main body has the higher ID
+            {
+                int tmp = npc.whoAmI;
+                NPC tmpNPC = Main.npc[PrimaryEyeID];
+                npc.whoAmI = PrimaryEyeID;
+                Main.npc[npc.whoAmI] = npc;
+                tmpNPC.whoAmI = tmp;
+                Main.npc[tmp] = tmpNPC;
+                PrimaryEyeID = tmp;
+                Main.npc[tmp].ai[0] = npc.whoAmI;
+            }
         }
 
         public override void AI()
@@ -96,8 +108,10 @@ namespace Desolation.NPCs.Oculus
             if (AI_State == (int)State.Initial)
             {
                 SpawnEyes();
-                AI_State = (int)State.Waiting;
+                AI_State = (int)State.Crying;
             }
+
+            AI_Timer++;
         }
     }
 }
