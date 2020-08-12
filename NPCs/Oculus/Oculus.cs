@@ -1,4 +1,5 @@
-﻿using Terraria;
+﻿using Microsoft.Xna.Framework;
+using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using static Terraria.ModLoader.ModContent;
@@ -39,7 +40,7 @@ namespace Desolation.NPCs.Oculus
             npc.knockBackResist = 0f;
 
             npc.noGravity = true;
-
+            npc.noTileCollide = true;
             // Keep the body untargettable and health bar-free.
             npc.dontTakeDamage = true;
         }
@@ -61,10 +62,10 @@ namespace Desolation.NPCs.Oculus
         private const float acceleration = 1.2f;
 
         // Getters and Setters for AI slots for convenience
-        public float AI_State
+        public State AI_State
         {
-            get => npc.ai[AI_State_Slot];
-            set => npc.ai[AI_State_Slot] = value;
+            get => (State)npc.ai[AI_State_Slot];
+            set => npc.ai[AI_State_Slot] = (float)value;
         }
 
         public float AI_Timer
@@ -103,15 +104,55 @@ namespace Desolation.NPCs.Oculus
             }
         }
 
-        public override void AI()
+        private void Cry()
         {
-            if (AI_State == (int)State.Initial)
+            if (AI_Timer > 900)
             {
-                SpawnEyes();
-                AI_State = (int)State.Crying;
+                AI_Timer = Main.expertMode ? 120 : 240;
+                AI_State = State.Waiting;
+                return;
             }
 
+            if (Target == null || !Target.active || Target.dead)
+            {
+                npc.TargetClosest(false);
+            }
+
+            Vector2 targetPosition = Target.Center;
+            targetPosition.Y -= 160;
+            int inertia = 20;
+            Vector2 direction = targetPosition - npc.Center;
+            direction.Normalize();
+            direction *= speed;
+            npc.velocity = (npc.velocity * (inertia - 1) + direction) / inertia;
+        }
+
+        public override void AI()
+        {
             AI_Timer++;
+            Main.NewText(AI_State);
+            switch (AI_State)
+            {
+                case State.Initial:
+                    SpawnEyes();
+                    AI_State = State.Crying;
+                    AI_Timer = 0;
+                    break;
+
+                case State.Waiting:
+                    AI_Timer -= 2;
+                    npc.velocity *= .98f;
+                    if (AI_Timer <= 0)
+                    {
+                        AI_Timer = 0;
+                        AI_State = State.Crying;
+                    }
+                    break;
+
+                case State.Crying:
+                    Cry();
+                    break;
+            }
         }
     }
 }
