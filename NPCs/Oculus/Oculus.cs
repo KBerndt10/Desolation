@@ -248,6 +248,7 @@ namespace Desolation.NPCs.Oculus
                     AI_State = State.Phase2Start;
                     AI_Timer = 0;
                     npc.velocity *= 0;
+                    npc.dontTakeDamage = false;
                     Main.PlaySound(SoundID.Roar, npc.Center);
                 }
                 else
