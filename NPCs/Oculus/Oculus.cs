@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System.Linq;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -9,7 +10,9 @@ namespace Desolation.NPCs.Oculus
     [AutoloadBossHead]
     internal class Oculus : ModNPC
     {
-        private int myFrame = 0;
+        protected int myFrame = 0;
+        protected bool hasEyes = true;
+        protected OculusEye[] Eyes = null;
 
         public override void SetStaticDefaults()
         {
@@ -55,10 +58,10 @@ namespace Desolation.NPCs.Oculus
         // State values
         public enum State
         {
-            Initial = 0, Waiting, Crying
+            Initial = 0, Waiting, Phase2Start, Crying
         }
 
-        private const float speed = 8f;
+        private const float speed = 14f;
         private const float acceleration = 1.2f;
 
         // Getters and Setters for AI slots for convenience
@@ -74,6 +77,18 @@ namespace Desolation.NPCs.Oculus
             set => npc.ai[AI_Timer_Slot] = value;
         }
 
+        public float AI_2
+        {
+            get => npc.ai[AI_Slot_2];
+            set => npc.ai[AI_Slot_2] = value;
+        }
+
+        public float AI_3
+        {
+            get => npc.ai[AI_Slot_3];
+            set => npc.ai[AI_Slot_3] = value;
+        }
+
         private Player Target
         {
             get => Main.player[npc.target];
@@ -86,22 +101,22 @@ namespace Desolation.NPCs.Oculus
             set { npc.velocity.Normalize(); npc.velocity *= value; }
         }
 
-        private int PrimaryEyeID = -1;
+        protected const int PrimaryEyeID = 0;
+        protected OculusPrimaryEye PrimaryEye => (OculusPrimaryEye)Eyes[PrimaryEyeID];
 
         private void SpawnEyes()
         {
-            PrimaryEyeID = NPC.NewNPC((int)npc.position.X, (int)npc.position.Y, NPCType<OculusPrimaryEye>(), 0, npc.whoAmI);
-            if (PrimaryEyeID > npc.whoAmI) // Ensure the main body has the higher ID
+            int lastSlot = Main.npc.Length - 1;
+
+            Eyes = new OculusEye[5];
+            Eyes[PrimaryEyeID] = (OculusPrimaryEye)Main.npc[NPC.NewNPC((int)npc.position.X, (int)npc.position.Y, NPCType<OculusPrimaryEye>(), 0, npc.whoAmI)].modNPC;
+            for (int i = 1; i < 5; i++)
             {
-                int tmp = npc.whoAmI;
-                NPC tmpNPC = Main.npc[PrimaryEyeID];
-                npc.whoAmI = PrimaryEyeID;
-                Main.npc[npc.whoAmI] = npc;
-                tmpNPC.whoAmI = tmp;
-                Main.npc[tmp] = tmpNPC;
-                PrimaryEyeID = tmp;
-                Main.npc[tmp].ai[0] = npc.whoAmI;
+                Eyes[i] = (OculusBasicEye)Main.npc[
+                    NPC.NewNPC((int)npc.position.X, (int)npc.position.Y, NPCType<OculusBasicEye>(), 0, npc.whoAmI, 0, 0, i)].modNPC;
             }
+
+            eyesSpawned = true;
         }
 
         private void Cry()
@@ -127,31 +142,140 @@ namespace Desolation.NPCs.Oculus
             npc.velocity = (npc.velocity * (inertia - 1) + direction) / inertia;
         }
 
+        private void Wait()
+        {
+            AI_Timer -= 2;
+            npc.velocity *= .99f;
+            if (AI_Timer <= 0)
+            {
+                AI_Timer = 0;
+                AI_State = State.Crying;
+            }
+        }
+
+        private void WaitPhase2()
+        {
+            AI_Timer -= 2;
+            if (AI_Timer <= 0)
+            {
+                npc.rotation = 0;
+                AI_Timer = 0;
+            }
+            else if (Main.netMode != NetmodeID.MultiplayerClient)
+            {
+                Vector2 away = npc.Center - Target.Center;
+                away.Normalize();
+                away *= 0.25f * speed;
+                npc.velocity = away;
+                npc.rotation *= npc.direction * npc.velocity.X * 0.05f;
+            }
+        }
+
+        private void SecureSlot()
+        {
+            int highID = npc.whoAmI;
+
+            foreach (OculusEye eye in Eyes)
+            {
+                if (eye.npc.whoAmI > highID)
+                {
+                    highID = eye.npc.whoAmI;
+                }
+            }
+            //Swap Oculus into the highest Main.npc position available
+            if (npc.whoAmI != highID)
+            {
+                Main.NewText("swapping");
+                NPC other = Main.npc[highID];
+                Main.npc[npc.whoAmI] = other;
+                Main.npc[highID] = npc;
+
+                // Swap the whoAmIs
+                other.whoAmI = npc.whoAmI;
+                npc.whoAmI = highID;
+            }
+
+            foreach (OculusEye eye in Eyes) eye.AI_Master = npc.whoAmI;
+
+            slotSecured = true;
+        }
+
+        private bool eyesSpawned = false;
+        private bool slotSecured = false;
+
+        private void Initialize()
+        {
+            if (!eyesSpawned)
+            {
+                SpawnEyes();
+            }
+            else if (!slotSecured)
+            {
+                SecureSlot();
+            }
+            else
+            {
+                AI_State = State.Crying;
+                AI_Timer = 0;
+            }
+        }
+
         public override void AI()
         {
             AI_Timer++;
-            Main.NewText(AI_State);
-            switch (AI_State)
+            //Main.NewText(AI_State);
+
+            if (hasEyes)
             {
-                case State.Initial:
-                    SpawnEyes();
-                    AI_State = State.Crying;
+                switch (AI_State)
+                {
+                    case State.Initial:
+                        Initialize();
+                        break;
+
+                    case State.Waiting:
+                        Wait();
+                        break;
+
+                    case State.Crying:
+                        Cry();
+                        break;
+                }
+
+                hasEyes = Eyes.Any(x => x.npc.active && x.attached);
+                if (!hasEyes)
+                {
+                    AI_State = State.Phase2Start;
                     AI_Timer = 0;
-                    break;
+                    npc.velocity *= 0;
+                    Main.PlaySound(SoundID.ForceRoar, npc.Center);
+                }
+            }
+            else
+            {
+                switch (AI_State)
+                {
+                    case State.Phase2Start:
+                        if (AI_Timer < 720)
+                        {
+                            npc.rotation += MathHelper.Pi / 16;
+                        }
+                        else
+                        {
+                            AI_Timer = 120;
+                            AI_State = State.Waiting;
+                            AI_3 = float.MaxValue;
+                        }
+                        break;
 
-                case State.Waiting:
-                    AI_Timer -= 2;
-                    npc.velocity *= .98f;
-                    if (AI_Timer <= 0)
-                    {
-                        AI_Timer = 0;
-                        AI_State = State.Crying;
-                    }
-                    break;
+                    case State.Waiting:
+                        WaitPhase2();
+                        break;
 
-                case State.Crying:
-                    Cry();
-                    break;
+                    default:
+                        Main.NewText("Error, invalid AI state in phase 2");
+                        break;
+                }
             }
         }
     }

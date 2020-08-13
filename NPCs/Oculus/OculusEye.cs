@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -8,6 +9,7 @@ namespace Desolation.NPCs.Oculus
 {
     internal abstract class OculusEye : ModNPC
     {
+        public bool attached = true;
         protected bool LookAtPlayer = true;
         protected int frame;
 
@@ -72,6 +74,12 @@ namespace Desolation.NPCs.Oculus
             set => npc.ai[AI_Timer_Slot] = value;
         }
 
+        public float AI_3
+        {
+            get => npc.ai[AI_Slot_3];
+            set => npc.ai[AI_Slot_3] = value;
+        }
+
         public Player Target
         {
             get => Main.player[npc.target];
@@ -107,6 +115,15 @@ namespace Desolation.NPCs.Oculus
             base.FindFrame(frameHeight);
         }
 
+        public bool StayAttached()
+        {
+            return npc.life > npc.lifeMax / 2;
+        }
+
+        public abstract void Detach();
+
+        public abstract void StickToMaster();
+
         public override void AI()
         {
             // Get rid of this is the master is gone
@@ -120,22 +137,34 @@ namespace Desolation.NPCs.Oculus
             }
 
             // If over half life, stick to master
-            if (npc.life > npc.lifeMax / 2)
+            if (attached)
             {
-                npc.position = Master.Center;
-                npc.TargetClosest();
-                if (Main.netMode != NetmodeID.MultiplayerClient)
+                if (StayAttached() && Main.netMode != NetmodeID.MultiplayerClient)
                 {
-                    switch (MasterState)
+                    StickToMaster();
+                    npc.TargetClosest();
+                    if (Main.netMode != NetmodeID.MultiplayerClient)
                     {
-                        case Oculus.State.Crying:
-                            if (MasterTimer % 5 == 0)
-                            {
-                                Projectile.NewProjectile(npc.Center.X + Main.rand.NextFloat(npc.width / 2, npc.width / -2), npc.position.Y + npc.height, 0, 4, ProjectileID.RainNimbus, 30, 2);
-                            }
-                            break;
+                        switch (MasterState)
+                        {
+                            case Oculus.State.Crying:
+                                if (MasterTimer % 5 == 0)
+                                {
+                                    Projectile.NewProjectile(npc.Center.X + Main.rand.NextFloat(npc.width / 2, npc.width / -2), npc.position.Y + npc.height, 0, 4, ProjectileID.RainNimbus, (int)Math.Ceiling(npc.damage * .66f), 1.2f);
+                                }
+                                break;
+                        }
                     }
                 }
+                else
+                {
+                    attached = false;
+                    Detach();
+                }
+            }
+            else
+            {
+                // TODO: Unattached AI
             }
         }
     }

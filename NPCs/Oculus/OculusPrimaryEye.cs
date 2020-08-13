@@ -15,6 +15,16 @@
             npc.lifeMax = 12000;
         }
 
+        public override void Detach()
+        {
+        }
+
+        public override void StickToMaster()
+        {
+            npc.position = Master.Center;
+            npc.position.X -= npc.width;
+        }
+
         public override void AI()
         {
             base.AI();
