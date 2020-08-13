@@ -49,7 +49,7 @@ namespace Desolation.NPCs.Oculus
         // State values
         protected enum State
         {
-            Waiting,
+            Waiting, Detaching, Pursue
         }
 
         protected const float speed = 8f;
@@ -62,10 +62,10 @@ namespace Desolation.NPCs.Oculus
             set => npc.ai[AI_Master_Slot] = value;
         }
 
-        public float AI_State
+        protected State AI_State
         {
-            get => npc.ai[AI_State_Slot];
-            set => npc.ai[AI_State_Slot] = value;
+            get => (State)npc.ai[AI_State_Slot];
+            set => npc.ai[AI_State_Slot] = (float)value;
         }
 
         public float AI_Timer
@@ -115,6 +115,20 @@ namespace Desolation.NPCs.Oculus
             base.FindFrame(frameHeight);
         }
 
+        protected void Wait()
+        {
+            AI_Timer -= 2;
+            if (AI_Timer <= 0)
+            {
+                AI_State = State.Pursue;
+                AI_Timer = 0;
+            }
+            else
+            {
+                npc.velocity *= 0.99f;
+            }
+        }
+
         public bool StayAttached()
         {
             return npc.life > npc.lifeMax / 2;
@@ -122,7 +136,15 @@ namespace Desolation.NPCs.Oculus
 
         public abstract void Detach();
 
-        public abstract void StickToMaster();
+        public abstract void StickToMaster(Vector2 center);
+
+        public void Cry()
+        {
+            if (Main.netMode != NetmodeID.MultiplayerClient && MasterTimer % 5 == 0)
+            {
+                Projectile.NewProjectile(npc.Center.X + Main.rand.NextFloat(npc.width / 2, npc.width / -2), npc.position.Y + npc.height, 0, 4, ProjectileID.RainNimbus, (int)Math.Ceiling(npc.damage * .66f), 1.2f);
+            }
+        }
 
         public override void AI()
         {
@@ -136,22 +158,17 @@ namespace Desolation.NPCs.Oculus
                 npc.timeLeft = 10;
             }
 
-            // If over half life, stick to master
             if (attached)
             {
                 if (StayAttached() && Main.netMode != NetmodeID.MultiplayerClient)
                 {
-                    StickToMaster();
                     npc.TargetClosest();
                     if (Main.netMode != NetmodeID.MultiplayerClient)
                     {
                         switch (MasterState)
                         {
                             case Oculus.State.Crying:
-                                if (MasterTimer % 5 == 0)
-                                {
-                                    Projectile.NewProjectile(npc.Center.X + Main.rand.NextFloat(npc.width / 2, npc.width / -2), npc.position.Y + npc.height, 0, 4, ProjectileID.RainNimbus, (int)Math.Ceiling(npc.damage * .66f), 1.2f);
-                                }
+                                Cry();
                                 break;
                         }
                     }

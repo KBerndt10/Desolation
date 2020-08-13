@@ -24,7 +24,7 @@ namespace Desolation.NPCs.Oculus.Items
             item.rare = ItemRarityID.Red;
 
             // Utility
-            item.maxStack = 20;
+            item.maxStack = Desolation.DEBUG ? 999 : 20;
             item.value = Item.buyPrice(0, 1, 0, 0);
 
             // Usage

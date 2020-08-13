@@ -248,7 +248,14 @@ namespace Desolation.NPCs.Oculus
                     AI_State = State.Phase2Start;
                     AI_Timer = 0;
                     npc.velocity *= 0;
-                    Main.PlaySound(SoundID.ForceRoar, npc.Center);
+                    Main.PlaySound(SoundID.Roar, npc.Center);
+                }
+                else
+                {
+                    foreach (OculusEye eye in Eyes.Where(x => x.attached))
+                    {
+                        eye.StickToMaster(npc.Center);
+                    }
                 }
             }
             else

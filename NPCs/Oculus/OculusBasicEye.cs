@@ -1,4 +1,6 @@
-﻿namespace Desolation.NPCs.Oculus
+﻿using Microsoft.Xna.Framework;
+
+namespace Desolation.NPCs.Oculus
 {
     internal class OculusBasicEye : OculusEye
     {
@@ -19,11 +21,12 @@
         {
             npc.aiStyle = 2;
             npc.noTileCollide = false;
+            attached = false;
         }
 
-        public override void StickToMaster()
+        public override void StickToMaster(Vector2 center)
         {
-            npc.position = Master.Center;
+            npc.position = center;
             switch (AI_3)
             {
                 case 1:
@@ -38,7 +41,7 @@
                     break;
 
                 case 3:
-                    npc.position.X -= Master.width * 0.9f; ;
+                    npc.position.X -= Master.width * 0.45f; ;
                     npc.position.Y -= 2;
                     break;
 
