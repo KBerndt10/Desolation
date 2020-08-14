@@ -30,24 +30,24 @@ namespace Desolation.NPCs.Oculus
             switch (AI_3)
             {
                 case 1:
-                    npc.position.X -= 14;
-                    npc.position.Y += 22;
+                    npc.position.X -= 43;
+                    npc.position.Y += 27;
 
                     break;
 
                 case 2:
-                    npc.position.X += 17;
-                    npc.position.Y += 19;
+                    npc.position.X += 67;
+                    npc.position.Y += 39;
                     break;
 
                 case 3:
-                    npc.position.X -= Master.width * 0.45f; ;
-                    npc.position.Y -= 2;
+                    npc.position.X -= Master.width * 0.4f; ;
+                    npc.position.Y -= 8;
                     break;
 
                 case 4:
-                    npc.position.X += 5;
-                    npc.position.Y -= 23;
+                    npc.position.X += 25;
+                    npc.position.Y -= 44;
                     break;
 
                 default:

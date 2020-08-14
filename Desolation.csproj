@@ -16,4 +16,9 @@
   <ItemGroup>
     <Folder Include="Items\Ammo\" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="NPCs\Oculus\Projectiles\BouncyEye.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Desolation.NPCs.Oculus.Projectiles;
+using Microsoft.Xna.Framework;
 using System.Linq;
 using Terraria;
 using Terraria.ID;
@@ -37,7 +38,7 @@ namespace Desolation.NPCs.Oculus
             npc.boss = true;
 
             // Combat
-            npc.damage = 0;
+            npc.damage = 40;
             npc.defense = 25;
             npc.lifeMax = 35000;
             npc.knockBackResist = 0f;
@@ -58,7 +59,7 @@ namespace Desolation.NPCs.Oculus
         // State values
         public enum State
         {
-            Initial = 0, Waiting, Phase2Start, Crying
+            Initial = 0, Waiting, Phase2Start, Crying, BulletSpray
         }
 
         private const float speed = 14f;
@@ -119,6 +120,44 @@ namespace Desolation.NPCs.Oculus
             eyesSpawned = true;
         }
 
+        private bool inPosition = false;
+
+        private void BulletSpray()
+        {
+            if (!inPosition)
+            {
+                npc.TargetClosest();
+                if (npc.Distance(Target.Center) > 420)
+                {
+                    SimpleMove(Target.Center);
+                }
+                else
+                {
+                    inPosition = true;
+                    npc.velocity *= 0;
+                }
+                AI_Timer = 0;
+            }
+            else if (AI_Timer > (Main.expertMode ? 540 : 360))
+            {
+                AI_State = State.Waiting;
+                AI_Timer = 150;
+                inPosition = false;
+            }
+            else
+            {
+                if (AI_Timer % 5 == 0)
+                {
+                    float spread = MathHelper.Pi / 18;
+                    int shotNum = (int)(AI_Timer % 180) / 5;
+                    Vector2 projVelocity = new Vector2(0, -10);
+                    projVelocity = projVelocity.RotatedBy(shotNum * spread);
+
+                    Projectile.NewProjectile(npc.Center, projVelocity, ProjectileType<BouncyEye>(), (int)(npc.damage * 0.75), 2.6f);
+                }
+            }
+        }
+
         private void Cry()
         {
             if (AI_Timer > 900)
@@ -135,8 +174,12 @@ namespace Desolation.NPCs.Oculus
 
             Vector2 targetPosition = Target.Center;
             targetPosition.Y -= 160;
-            int inertia = 20;
-            Vector2 direction = targetPosition - npc.Center;
+            SimpleMove(targetPosition);
+        }
+
+        private void SimpleMove(Vector2 dest, int inertia = 20)
+        {
+            Vector2 direction = dest - npc.Center;
             direction.Normalize();
             direction *= speed;
             npc.velocity = (npc.velocity * (inertia - 1) + direction) / inertia;
@@ -149,7 +192,17 @@ namespace Desolation.NPCs.Oculus
             if (AI_Timer <= 0)
             {
                 AI_Timer = 0;
-                AI_State = State.Crying;
+                if (Main.netMode != NetmodeID.MultiplayerClient)
+                {
+                    if (Main.rand.Next(0, 2) < 1)
+                    {
+                        AI_State = State.Crying;
+                    }
+                    else
+                    {
+                        AI_State = State.BulletSpray;
+                    }
+                }
             }
         }
 
@@ -185,7 +238,6 @@ namespace Desolation.NPCs.Oculus
             //Swap Oculus into the highest Main.npc position available
             if (npc.whoAmI != highID)
             {
-                Main.NewText("swapping");
                 NPC other = Main.npc[highID];
                 Main.npc[npc.whoAmI] = other;
                 Main.npc[highID] = npc;
@@ -239,6 +291,10 @@ namespace Desolation.NPCs.Oculus
 
                     case State.Crying:
                         Cry();
+                        break;
+
+                    case State.BulletSpray:
+                        BulletSpray();
                         break;
                 }
 

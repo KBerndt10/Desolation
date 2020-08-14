@@ -1,4 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
+using Terraria;
+using Terraria.ID;
 
 namespace Desolation.NPCs.Oculus
 {
@@ -76,11 +78,29 @@ namespace Desolation.NPCs.Oculus
             }
         }
 
+        public void BulletSprayLaser()
+        {
+            if (MasterTimer % 60 == 0)
+            {
+                Vector2 projVel = Target.Center - npc.Center;
+                Projectile.NewProjectile(npc.Center, projVel, ProjectileID.EyeLaser, npc.damage, 3);
+            }
+        }
+
         public override void AI()
         {
             if (attached)
             {
-                base.AI();
+                switch (MasterState)
+                {
+                    case Oculus.State.BulletSpray:
+                        BulletSprayLaser();
+                        break;
+
+                    default:
+                        base.AI();
+                        break;
+                }
             }
             else
             {
