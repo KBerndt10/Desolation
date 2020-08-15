@@ -59,7 +59,7 @@ namespace Desolation.NPCs.Oculus
         // State values
         public enum State
         {
-            Initial = 0, Waiting, Phase2Start, Crying, BulletSpray
+            Initial = 0, Waiting, Phase2Start, Crying, BulletSpray, ChargeThrough
         }
 
         private const float speed = 14f;
@@ -185,6 +185,15 @@ namespace Desolation.NPCs.Oculus
             npc.velocity = (npc.velocity * (inertia - 1) + direction) / inertia;
         }
 
+        private void MoveWithAcceleration(Vector2 dest, float maxChange = 0.5f)
+        {
+            Vector2 direction = dest - npc.Center;
+            direction.Normalize();
+            direction *= maxChange;
+            npc.velocity += direction;
+            if (Speed > speed) Speed = speed;
+        }
+
         private void Wait()
         {
             AI_Timer -= 2;
@@ -194,13 +203,24 @@ namespace Desolation.NPCs.Oculus
                 AI_Timer = 0;
                 if (Main.netMode != NetmodeID.MultiplayerClient)
                 {
-                    if (Main.rand.Next(0, 2) < 1)
+                    switch (Main.rand.Next(0, 3))
                     {
-                        AI_State = State.Crying;
-                    }
-                    else
-                    {
-                        AI_State = State.BulletSpray;
+                        case 0:
+                            AI_State = State.BulletSpray;
+                            break;
+
+                        case 1:
+                            AI_State = State.ChargeThrough;
+                            break;
+
+                        case 2:
+                            AI_State = State.Crying;
+                            break;
+
+                        default:
+                            AI_State = State.Waiting;
+                            AI_Timer = 12;
+                            break;
                     }
                 }
             }
@@ -247,7 +267,12 @@ namespace Desolation.NPCs.Oculus
                 npc.whoAmI = highID;
             }
 
-            foreach (OculusEye eye in Eyes) eye.AI_Master = npc.whoAmI;
+            foreach (OculusEye eye in Eyes)
+            {
+                eye.AI_Master = npc.whoAmI;
+                eye.npc.netUpdate = true;
+            }
+            npc.netUpdate = true;
 
             slotSecured = true;
         }
@@ -272,11 +297,46 @@ namespace Desolation.NPCs.Oculus
             }
         }
 
+        private Vector2 targetDest;
+
+        private void ChargeThrough()
+        {
+            if (AI_Timer == 1)
+            {
+                AI_2 = 0;
+            }
+            else if (AI_Timer == 2)
+            {
+                npc.TargetClosest();
+                Vector2 toTarget = Target.Center - npc.Center;
+                toTarget.Normalize();
+                targetDest = (toTarget * 120) + Target.Center;
+            }
+            else if (AI_2 > (Main.expertMode ? 4 : 3))
+            {
+                AI_Timer = Main.expertMode ? 180 : 300;
+                AI_State = State.Waiting;
+            }
+            else
+            {
+                if (Vector2.Distance(npc.Center, targetDest) <= 45f)
+                {
+                    AI_Timer = 1;
+                    AI_2++;
+                    npc.velocity *= 0.95f;
+                }
+                else
+                {
+                    MoveWithAcceleration(targetDest, Main.expertMode ? 0.7f : 0.4f);
+                }
+            }
+        }
+
         public override void AI()
         {
             AI_Timer++;
             //Main.NewText(AI_State);
-
+            if (Main.netMode != NetmodeID.MultiplayerClient) return;
             if (hasEyes)
             {
                 switch (AI_State)
@@ -295,6 +355,10 @@ namespace Desolation.NPCs.Oculus
 
                     case State.BulletSpray:
                         BulletSpray();
+                        break;
+
+                    case State.ChargeThrough:
+                        ChargeThrough();
                         break;
                 }
 

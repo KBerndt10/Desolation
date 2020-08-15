@@ -36,7 +36,10 @@ namespace Desolation.Projectiles
             projectile.position.Y = player.position.Y + projectile.ai[1];
 
             if (projectile.owner == Main.myPlayer)
+            {
                 projectile.rotation = projectile.AngleTo(Main.MouseWorld);
+                projectile.netUpdate = true;
+            }
         }
     }
 }

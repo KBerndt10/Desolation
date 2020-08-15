@@ -53,6 +53,7 @@ namespace Desolation.NPCs.Oculus
         {
             npc.position = center;
             npc.position.X -= npc.width;
+            npc.netUpdate = true;
         }
 
         public void Pursue()
@@ -80,8 +81,9 @@ namespace Desolation.NPCs.Oculus
 
         public void BulletSprayLaser()
         {
-            if (MasterTimer % 60 == 0)
+            if (MasterTimer % 40 == 0)
             {
+                npc.TargetClosest();
                 Vector2 projVel = Target.Center - npc.Center;
                 Projectile.NewProjectile(npc.Center, projVel, ProjectileID.EyeLaser, npc.damage, 3);
             }

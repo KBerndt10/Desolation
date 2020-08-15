@@ -56,6 +56,7 @@ namespace Desolation.NPCs.Oculus
 
                     break;
             }
+            npc.netUpdate = true;
         }
 
         public override void AI()
