@@ -1,8 +1,10 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Desolation.NPCs.Librarian.Projectiles;
+using Microsoft.Xna.Framework;
 using System;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using static Terraria.ModLoader.ModContent;
 
 namespace Desolation.NPCs.Librarian
 {
@@ -65,7 +67,7 @@ namespace Desolation.NPCs.Librarian
 
         public enum States
         {
-            Initial = 0, Repositioning
+            Initial = 0, Burst, CircleOfBooks
         }
 
         public States AI_State
@@ -102,7 +104,7 @@ namespace Desolation.NPCs.Librarian
         public void Initialize()
         {
             AI_Timer = 0;
-            AI_State = States.Repositioning;
+            AI_State = States.Burst;
         }
 
         #region Movements
@@ -120,46 +122,76 @@ namespace Desolation.NPCs.Librarian
 
         #endregion Movements
 
-        public void Reposition()
+        protected Vector2 burstCenter = new Vector2();
+
+        public void Burst()
         {
             if (AI_Timer == 0 || !Target_Valid)
             {
                 npc.TargetClosest(false);
                 AI_Timer = 1;
             }
-            else if (AI_Timer < 300)
+            AI_Timer++;
+            Vector2 dest = Target.Center;
+            dest.Y -= 480;
+            dest.X += npc.Center.X < Target.Center.X ? -480 : 480;
+
+            SimpleMove(dest);
+
+            if (AI_Timer > 249 && AI_Timer < 421)
             {
-                Vector2 dest = Target.Center;
-                dest.Y -= 480;
-                dest.X += npc.Center.X < Target.Center.X ? -480 : 480;
-                if (Vector2.Distance(npc.Center, dest) < 38)
-                {
-                    if (++AI_Timer > 150)
-                    {
-                        AI_Timer = 300;
-                    }
-                }
-                else
-                {
-                    if (AI_Timer > 1) AI_Timer -= 0.5f;
-                }
-                SimpleMove(dest);
-            }
-            else if (AI_Timer < 480)
-            {
-                if (++AI_Timer % 20 == 0)
+                if (burstCenter == default(Vector2)) burstCenter = Target.Center;
+                if (AI_Timer % 20 == 0)
                 {
                     float angle = MathHelper.Pi / 18;
                     int pos = (int)Math.Floor(AI_Timer / 20);
-                    Vector2 shoot = npc.Center - Target.Center;
+                    Vector2 shoot = npc.Center - burstCenter;
 
-                    shoot = shoot.RotatedBy((-3 * angle) + (pos * angle));
+                    shoot = shoot.RotatedBy((pos * angle));
                     shoot.Normalize();
                     shoot *= 10f;
 
                     Projectile.NewProjectile(npc.Center, shoot, ProjectileID.EyeLaser, npc.damage, 2);
                 }
             }
+            else
+            {
+                burstCenter = new Vector2();
+            }
+
+            if (AI_Timer > 441)
+            {
+                burstCenter = new Vector2();
+                AI_Timer = 0;
+                AI_State = States.CircleOfBooks;
+            }
+        }
+
+        public void BookCircle()
+        {
+            if (AI_Timer == 0 || !Target_Valid)
+            {
+                npc.TargetClosest(false);
+                AI_Timer = 1;
+            }
+            npc.velocity *= 0;
+            if (AI_Timer % 20 == 0 && AI_Timer <= 360)
+            {
+                Vector2 projSpawn = npc.Center;
+                projSpawn.Y -= 180;
+
+                npc.TargetClosest();
+                Projectile.NewProjectile(projSpawn, default, ProjectileType<CircleBook>(), npc.damage, 2.2f, 255, npc.target, npc.AngleTo(Target.Center));
+                Main.PlaySound(SoundID.DD2_BookStaffCast, projSpawn);
+            }
+
+            if (AI_Timer > 720)
+            {
+                AI_Timer = 0;
+                AI_State = States.Burst;
+            }
+
+            AI_Timer++;
         }
 
         public override void AI()
@@ -170,8 +202,12 @@ namespace Desolation.NPCs.Librarian
                     Initialize();
                     break;
 
-                case States.Repositioning:
-                    Reposition();
+                case States.Burst:
+                    Burst();
+                    break;
+
+                case States.CircleOfBooks:
+                    BookCircle();
                     break;
 
                 default:
