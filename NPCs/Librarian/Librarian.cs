@@ -16,15 +16,18 @@ namespace Desolation.NPCs.Librarian
             Main.npcFrameCount[npc.type] = 4;
         }
 
+        public int CircleBookDamage = 28;
+        public int burstDamage = 36;
+
         public override void SetDefaults()
         {
             // AI
             npc.aiStyle = -1;
 
             // Combat
-            npc.lifeMax = 20000;
-            npc.damage = 15;
-            npc.defense = 12;
+            npc.lifeMax = 6000;
+            npc.damage = 36;
+            npc.defense = 10;
             npc.knockBackResist = 0f;
             npc.buffImmune[24] = true;
 
@@ -43,6 +46,25 @@ namespace Desolation.NPCs.Librarian
             npc.noTileCollide = true;
 
             npc.value = Item.buyPrice(0, 10, 0, 0);
+        }
+
+        public override void ScaleExpertStats(int numPlayers, float bossLifeScale)
+        {
+            // Expert mode scaling
+            if (Main.expertMode)
+            {
+                npc.lifeMax = (int)(1.5 * npc.lifeMax);
+                npc.defense *= 2;
+                npc.damage *= 3;
+                burstDamage = (int)(burstDamage * 1.5);
+                CircleBookDamage = (int)(CircleBookDamage * 1.5);
+            }
+
+            // player count scaling
+            npc.lifeMax *= (int)((Main.ActivePlayersCount - 1) * 1.2);
+
+            // ensure that the boss starts at full health
+            npc.life = npc.lifeMax;
         }
 
         public override void FindFrame(int frameHeight)
@@ -67,7 +89,7 @@ namespace Desolation.NPCs.Librarian
 
         public enum States
         {
-            Initial = 0, Burst, CircleOfBooks
+            Initial = 0, Burst, CircleOfBooks, Phase2
         }
 
         public States AI_State
@@ -107,9 +129,20 @@ namespace Desolation.NPCs.Librarian
             AI_State = States.Burst;
         }
 
-        #region Movements
+        protected bool Phase2 = false;
 
-        private bool g;
+        public override void HitEffect(int hitDirection, double damage)
+        {
+            base.HitEffect(hitDirection, damage);
+            if (!Phase2 && npc.life < npc.lifeMax * 0.6 && Main.netMode != NetmodeID.MultiplayerClient)
+            {
+                Phase2 = true;
+                AI_State = States.Phase2;
+                AI_Timer = 0;
+            }
+        }
+
+        #region Movements
 
         // Move to the given position at maximum speed
         private void SimpleMove(Vector2 dest, int inertia = 20)
@@ -151,7 +184,7 @@ namespace Desolation.NPCs.Librarian
                     shoot.Normalize();
                     shoot *= 10f;
 
-                    Projectile.NewProjectile(npc.Center, shoot, ProjectileID.EyeLaser, npc.damage, 2);
+                    Projectile.NewProjectile(npc.Center, shoot, ProjectileID.EyeLaser, burstDamage, 2);
                 }
             }
             else
@@ -175,13 +208,13 @@ namespace Desolation.NPCs.Librarian
                 AI_Timer = 1;
             }
             npc.velocity *= 0;
-            if (AI_Timer % 20 == 0 && AI_Timer <= 360)
+            if (AI_Timer % 20 == 0 && AI_Timer <= 360 && Main.netMode != NetmodeID.MultiplayerClient)
             {
                 Vector2 projSpawn = npc.Center;
                 projSpawn.Y -= 180;
 
                 npc.TargetClosest();
-                Projectile.NewProjectile(projSpawn, default, ProjectileType<CircleBook>(), npc.damage, 2.2f, 255, npc.target, npc.AngleTo(Target.Center));
+                Projectile.NewProjectile(projSpawn, default, ProjectileType<CircleBook>(), CircleBookDamage, 2.2f, 255, npc.target, npc.AngleTo(Target.Center));
                 Main.PlaySound(SoundID.DD2_BookStaffCast, projSpawn);
             }
 
@@ -191,6 +224,20 @@ namespace Desolation.NPCs.Librarian
                 AI_State = States.Burst;
             }
 
+            AI_Timer++;
+        }
+
+        protected bool madeBooks = false;
+
+        public void Phase2Transition()
+        {
+            Phase2 = true;
+            if (!madeBooks && Main.netMode != NetmodeID.MultiplayerClient)
+            {
+                NPC.NewNPC((int)npc.Center.X, (int)npc.Center.Y, NPCType<Phase2Book>(), 0, 0, 0, npc.whoAmI, 0);
+                NPC.NewNPC((int)npc.Center.X, (int)npc.Center.Y, NPCType<Phase2Book>(), 0, 0, 0, npc.whoAmI, 1);
+            }
+            madeBooks = true;
             AI_Timer++;
         }
 
@@ -208,6 +255,10 @@ namespace Desolation.NPCs.Librarian
 
                 case States.CircleOfBooks:
                     BookCircle();
+                    break;
+
+                case States.Phase2:
+                    Phase2Transition();
                     break;
 
                 default:
