@@ -166,15 +166,15 @@ namespace Desolation.NPCs.Librarian
             }
             AI_Timer++;
             Vector2 dest = Target.Center;
-            dest.Y -= 480;
-            dest.X += npc.Center.X < Target.Center.X ? -480 : 480;
+            dest.Y -= 440;
+            dest.X += npc.Center.X < Target.Center.X ? -440 : 440;
 
             SimpleMove(dest);
 
             if (AI_Timer > 249 && AI_Timer < 421)
             {
                 if (burstCenter == default(Vector2)) burstCenter = Target.Center;
-                if (AI_Timer % 20 == 0)
+                if (AI_Timer % (Phase2 ? 6 : 15) == 0)
                 {
                     float angle = MathHelper.Pi / 18;
                     int pos = (int)Math.Floor(AI_Timer / 20);
@@ -208,7 +208,7 @@ namespace Desolation.NPCs.Librarian
                 AI_Timer = 1;
             }
             npc.velocity *= 0;
-            if (AI_Timer % 20 == 0 && AI_Timer <= 360 && Main.netMode != NetmodeID.MultiplayerClient)
+            if (AI_Timer % (Phase2 ? 10 : 20) == 0 && AI_Timer <= 360 && Main.netMode != NetmodeID.MultiplayerClient)
             {
                 Vector2 projSpawn = npc.Center;
                 projSpawn.Y -= 180;
@@ -232,12 +232,37 @@ namespace Desolation.NPCs.Librarian
         public void Phase2Transition()
         {
             Phase2 = true;
-            if (!madeBooks && Main.netMode != NetmodeID.MultiplayerClient)
+            if (!madeBooks)
             {
-                NPC.NewNPC((int)npc.Center.X, (int)npc.Center.Y, NPCType<Phase2Book>(), 0, 0, 0, npc.whoAmI, 0);
-                NPC.NewNPC((int)npc.Center.X, (int)npc.Center.Y, NPCType<Phase2Book>(), 0, 0, 0, npc.whoAmI, 1);
+                npc.velocity *= 0;
+                npc.netUpdate = true;
+                Main.PlaySound(SoundID.DD2_BetsyScream, npc.Center);
+                if (Main.netMode != NetmodeID.MultiplayerClient)
+                {
+                    NPC.NewNPC((int)npc.Center.X, (int)npc.Center.Y, NPCType<Phase2Book>(), 0, 0, 0, npc.whoAmI, 0);
+                    NPC.NewNPC((int)npc.Center.X, (int)npc.Center.Y, NPCType<Phase2Book>(), 0, 0, 0, npc.whoAmI, 1);
+                }
+                madeBooks = true;
             }
-            madeBooks = true;
+
+            if (AI_Timer > 600)
+            {
+                AI_Timer = 0;
+                AI_State = States.Burst;
+            }
+            else
+            {
+                if (AI_Timer % 8 == 0 && Main.netMode != NetmodeID.MultiplayerClient)
+                {
+                    for (int i = 0; i < (Main.expertMode ? 8 : 4); i++)
+                    {
+                        Vector2 vel = new Vector2(Main.rand.NextFloat(-1, 1), Main.rand.NextFloat(-1, 1));
+                        vel *= 8;
+                        Projectile.NewProjectile(npc.Center, vel, ProjectileID.BulletDeadeye, npc.damage, 2);
+                    }
+                }
+            }
+
             AI_Timer++;
         }
 

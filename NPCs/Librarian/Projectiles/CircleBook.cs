@@ -19,8 +19,10 @@ namespace Desolation.NPCs.Librarian.Projectiles
         {
             projectile.width = 32;
             projectile.height = 32;
+
             projectile.friendly = false;
             projectile.hostile = true;
+
             projectile.tileCollide = false;
             projectile.timeLeft = 840;
         }
@@ -34,6 +36,7 @@ namespace Desolation.NPCs.Librarian.Projectiles
             else
             {
                 projectile.frame = 1;
+                // slowly rotate in dirtection of velocity
                 projectile.rotation += projectile.direction * 0.03f;
             }
             return base.PreDraw(spriteBatch, lightColor);
@@ -66,7 +69,7 @@ namespace Desolation.NPCs.Librarian.Projectiles
 
             int upTime = 840 - projectile.timeLeft;
 
-            //Circle
+            //Circle spawner
             if (upTime < 360)
             {
                 if (Main.netMode != NetmodeID.MultiplayerClient)
@@ -77,7 +80,7 @@ namespace Desolation.NPCs.Librarian.Projectiles
                     projectile.netUpdate = true;
                 }
             }
-            else // Shoot
+            else // Shoot at player
             {
                 Player target = Main.player[(int)AI_0];
                 if (target.active)
@@ -89,6 +92,7 @@ namespace Desolation.NPCs.Librarian.Projectiles
                 }
                 else
                 {
+                    // Shoot in straight line if no target
                     Vector2 shoot = (new Vector2(0, -1)).RotatedBy(AI_1);
                     shoot *= 9.6f;
                     projectile.velocity = shoot;
