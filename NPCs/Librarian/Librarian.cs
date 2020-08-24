@@ -25,11 +25,11 @@ namespace Desolation.NPCs.Librarian
             npc.aiStyle = -1;
 
             // Combat
-            npc.lifeMax = 6000;
+            npc.lifeMax = (int)(6000 * (1 + ((Main.ActivePlayersCount - 1) * 0.23f)));
             npc.damage = 36;
             npc.defense = 10;
             npc.knockBackResist = 0f;
-            npc.buffImmune[24] = true;
+            npc.buffImmune[BuffID.Confused] = true;
 
             // Aesthetics
             npc.width = 120;
@@ -59,9 +59,6 @@ namespace Desolation.NPCs.Librarian
                 burstDamage = (int)(burstDamage * 1.5);
                 CircleBookDamage = (int)(CircleBookDamage * 1.5);
             }
-
-            // player count scaling
-            npc.lifeMax *= (int)((Main.ActivePlayersCount - 1) * 1.2);
 
             // ensure that the boss starts at full health
             npc.life = npc.lifeMax;
