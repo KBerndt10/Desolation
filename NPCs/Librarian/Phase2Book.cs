@@ -90,6 +90,7 @@ namespace Desolation.NPCs.Librarian
             direction.Normalize();
             direction *= speed;
             npc.velocity = (npc.velocity * (inertia - 1) + direction) / inertia;
+            npc.netUpdate = true;
         }
 
         protected void StickToMaster()
@@ -143,9 +144,10 @@ namespace Desolation.NPCs.Librarian
 
         public override void AI()
         {
-            if (Master.type != NPCType<Librarian>() || !Master.active)
+            if (Main.netMode != NetmodeID.MultiplayerClient && (Master.type != NPCType<Librarian>() || !Master.active))
             {
                 npc.life = -1;
+                npc.netUpdate = true;
             }
             else
             {
